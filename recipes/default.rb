@@ -30,26 +30,25 @@ directory node['supervisor']['dir'] do
   recursive true
 end
 
-directory node['supervisor']['log_dir'] do
+directory node['supervisor']['supervisord']['log_dir'] do
   owner "root"
   group "root"
   mode "755"
   recursive true
 end
 
-template node['supervisor']['conffile'] do
+template node['supervisor']['conf_file'] do
   source "supervisord.conf.erb"
   owner "root"
   group "root"
   mode "644"
   variables({
-    :inet_port => node['supervisor']['inet_port'],
-    :inet_username => node['supervisor']['inet_username'],
-    :inet_password => node['supervisor']['inet_password'],
-    :supervisord_minfds => node['supervisor']['minfds'],
-    :supervisord_minprocs => node['supervisor']['minprocs'],
-    :supervisord_nocleanup => node['supervisor']['nocleanup'],
-    :supervisor_version => node['supervisor']['version'],
+    :inet_port => node['supervisor']['inet_http_server']['inet_port'],
+    :inet_username => node['supervisor']['inet_http_server']['inet_username'],
+    :inet_password => node['supervisor']['inet_http_server']['inet_password'],
+    :supervisord_minfds => node['supervisor']['supervisord']['minfds'],
+    :supervisord_minprocs => node['supervisor']['supervisord']['minprocs'],
+    :supervisord_nocleanup => node['supervisor']['supervisord']['nocleanup'],
     :socket_file => node['supervisor']['socket_file'],
   })
 end
@@ -84,28 +83,5 @@ when "amazon", "centos", "debian", "fedora", "redhat", "ubuntu", "raspbian"
   service "supervisor" do
     supports :status => true, :restart => true
     action [:enable, :start]
-  end
-when "smartos"
-  directory "/opt/local/share/smf/supervisord" do
-    owner "root"
-    group "root"
-    mode "755"
-  end
-
-  template "/opt/local/share/smf/supervisord/manifest.xml" do
-    source "manifest.xml.erb"
-    owner "root"
-    group "root"
-    mode "644"
-    notifies :run, "execute[svccfg-import-supervisord]", :immediately
-  end
-
-  execute "svccfg-import-supervisord" do
-    command "svccfg import /opt/local/share/smf/supervisord/manifest.xml"
-    action :nothing
-  end
-
-  service "supervisord" do
-    action [:enable]
   end
 end
