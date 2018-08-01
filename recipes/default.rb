@@ -15,23 +15,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 
-include_recipe "python"
-
-# foodcritic FC023: we prefer not having the resource on non-smartos
-if platform_family?("smartos")
-  package "py27-expat" do
-    action :install
-  end
+python_runtime '2' do
+  version '2.7'
+  options :system
 end
 
-python_pip "supervisor" do
-  action :upgrade
-  version node['supervisor']['version'] if node['supervisor']['version']
-end
+python_package 'supervisor'
 
 directory node['supervisor']['dir'] do
+  owner "root"
+  group "root"
+  mode "755"
+  recursive true
+end
+
+directory node['supervisor']['log_dir'] do
   owner "root"
   group "root"
   mode "755"
@@ -53,13 +52,6 @@ template node['supervisor']['conffile'] do
     :supervisor_version => node['supervisor']['version'],
     :socket_file => node['supervisor']['socket_file'],
   })
-end
-
-directory node['supervisor']['log_dir'] do
-  owner "root"
-  group "root"
-  mode "755"
-  recursive true
 end
 
 template "/etc/default/supervisor" do
@@ -85,7 +77,7 @@ when "amazon", "centos", "debian", "fedora", "redhat", "ubuntu", "raspbian"
     variables({
       # TODO: use this variable in the debian platform-family template
       # instead of altering the PATH and calling "which supervisord".
-      :supervisord => "#{node['python']['prefix_dir']}/bin/supervisord"
+      :supervisord => "/usr/local/bin/supervisord"
     })
   end
 
